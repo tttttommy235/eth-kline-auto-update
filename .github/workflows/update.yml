@@ -1,4 +1,4 @@
-name: Update ETH Price from CoinCap to Gist
+name: Update ETH 15m Kline from Bybit to Gist
 
 on:
   schedule:
@@ -10,14 +10,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Fetch ETH Price
+      - name: Fetch ETH Kline from Bybit
         run: |
-          curl -sL "https://api.coincap.io/v2/assets/ethereum" -o eth_price.json
-          cat eth_price.json
+          curl -sL "https://api.bybit.com/v5/market/kline?category=spot&symbol=ETHUSDT&interval=15&limit=100" -o eth_kline.json
+          cat eth_kline.json
 
       - name: Format Payload
         run: |
-          content=$(cat eth_price.json | jq -c .)
+          content=$(cat eth_kline.json | jq -c .)
           echo "{\"files\": {\"eth_15m.json\": {\"content\": $content}}}" > final_payload.json
 
       - name: Upload to Gist
