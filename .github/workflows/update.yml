@@ -2,7 +2,7 @@ name: Update ETH Price from CoinCap to Gist
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/5 * * * *'  # 每5分钟运行一次
   workflow_dispatch:
 
 jobs:
@@ -10,12 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Fetch ETH Price from CoinCap
+      - name: Fetch ETH Price
         run: |
-          curl -s "https://api.coincap.io/v2/assets/ethereum" > eth_price.json
-          json=$(cat eth_price.json | python3 -c "import sys, json; print(json.dumps(json.load(sys.stdin)))")
-          echo "$json" > payload.json
-          echo "{\"files\":{\"eth_15m.json\":{\"content\":$json}}}" > final_payload.json
+          curl -sL "https://api.coincap.io/v2/assets/ethereum" -o eth_price.json
+          cat eth_price.json
+
+      - name: Format Payload
+        run: |
+          content=$(cat eth_price.json | jq -c .)
+          echo "{\"files\": {\"eth_15m.json\": {\"content\": $content}}}" > final_payload.json
 
       - name: Upload to Gist
         run: |
