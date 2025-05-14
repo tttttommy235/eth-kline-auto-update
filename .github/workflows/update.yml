@@ -15,10 +15,10 @@ jobs:
           curl -sL "https://api.bybit.com/v5/market/kline?category=spot&symbol=ETHUSDT&interval=15&limit=100" -o eth_kline.json
           cat eth_kline.json
 
-      - name: Format Payload
+      - name: Format Payload with Python
         run: |
-          content=$(jq -c . eth_kline.json)
-          echo "{\"files\": {\"eth_15m.json\": {\"content\": $content}}}" > final_payload.json
+          CONTENT=$(cat eth_kline.json | python3 -c "import sys, json; print(json.dumps(json.load(sys.stdin)))")
+          echo "{\"files\": {\"eth_15m.json\": {\"content\": $CONTENT}}}" > final_payload.json
 
       - name: Upload to Gist
         run: |
