@@ -1,8 +1,8 @@
-name: Update ETH 15m Kline from Bybit to Gist
+name: Update ETH 15m Kline to Gist
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # 每5分钟运行一次
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -10,15 +10,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Fetch ETH Kline from Bybit
+      - name: Fetch ETH Kline
         run: |
-          curl -sL "https://api.bybit.com/v5/market/kline?category=spot&symbol=ETHUSDT&interval=15&limit=100" -o eth_kline.json
-          cat eth_kline.json
-
-      - name: Format Payload
-        run: |
-          content=$(cat eth_kline.json | jq -c .)
-          echo "{\"files\": {\"eth_15m.json\": {\"content\": $content}}}" > final_payload.json
+          curl -s "https://api.binance.com/api/v3/klines?symbol=ETHUSDT&interval=15m&limit=10" > eth_15m.json
+          json=$(cat eth_15m.json | python3 -c "import sys, json; print(json.dumps(json.load(sys.stdin)))")
+          echo "$json" > payload.json
+          echo "{\"files\":{\"eth_15m.json\":{\"content\":$json}}}" > final_payload.json
 
       - name: Upload to Gist
         run: |
