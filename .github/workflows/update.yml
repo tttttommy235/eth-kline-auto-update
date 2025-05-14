@@ -1,29 +1,24 @@
-name: Update ETH 15m Kline from Bybit to Gist
+name: Update ETH Kline from Bybit
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
-  workflow_dispatch:
+    - cron: "*/5 * * * *" # 每5分钟运行一次
+  workflow_dispatch: # 可手动运行
 
 jobs:
-  update:
+  update-gist:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Fetch ETH Kline from Bybit
+      - name: Get ETH Kline from Bybit
+        id: get_kline
         run: |
-          curl -sL "https://api.bybit.com/v5/market/kline?category=spot&symbol=ETHUSDT&interval=15&limit=100" -o eth_kline.json
-          cat eth_kline.json
+          curl -s "https://api.bybit.com/v5/market/kline?category=spot&symbol=ETHUSDT&interval=15&limit=100" -o kline.json
 
-      - name: Format Payload with Python
-        run: |
-          CONTENT=$(cat eth_kline.json | python3 -c "import sys, json; print(json.dumps(json.load(sys.stdin)))")
-          echo "{\"files\": {\"eth_15m.json\": {\"content\": $CONTENT}}}" > final_payload.json
+      - name: Update Gist
+        uses: exuanbo/actions-deploy-gist@v1
+        with:
+          token: ${{ secrets.GIST_TOKEN }}
+          gist_id: ${{ secrets.GIST_ID }}
+          file_path: kline.json
 
-      - name: Upload to Gist
-        run: |
-          curl -X PATCH \
-            -H "Authorization: Bearer ${{ secrets.GIST_TOKEN }}" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/gists/6f7286d2f42ba9aee3d05a777d7bebba \
-            -d @final_payload.json
