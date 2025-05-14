@@ -1,4 +1,4 @@
-name: Update ETH 15m Kline to Gist
+name: Update ETH Price from CoinCap to Gist
 
 on:
   schedule:
@@ -10,20 +10,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Fetch ETH Kline
+      - name: Fetch ETH Price from CoinCap
         run: |
-          curl -s "https://api.binance.com/api/v3/klines?symbol=ETHUSDT&interval=15m&limit=10" > eth_15m.json
-          content=$(cat eth_15m.json | python3 -c "import sys, json; print(json.dumps(json.load(sys.stdin)))")
-          echo "$content" > escaped.txt
-          content_escaped=$(cat escaped.txt | sed 's/\"/\\"/g')
-
-          echo "{
-            \"files\": {
-              \"eth_15m.json\": {
-                \"content\": \"$content_escaped\"
-              }
-            }
-          }" > payload.json
+          curl -s "https://api.coincap.io/v2/assets/ethereum" > eth_price.json
+          json=$(cat eth_price.json | python3 -c "import sys, json; print(json.dumps(json.load(sys.stdin)))")
+          echo "$json" > payload.json
+          echo "{\"files\":{\"eth_15m.json\":{\"content\":$json}}}" > final_payload.json
 
       - name: Upload to Gist
         run: |
@@ -31,5 +23,4 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.GIST_TOKEN }}" \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/gists/6f7286d2f42ba9aee3d05a777d7bebba \
-            -d @payload.json
-
+            -d @final_payload.json
